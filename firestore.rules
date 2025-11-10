@@ -1,0 +1,97 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    
+    // Helper function to check if user is authenticated
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+    
+    // Helper function to check if user owns the document
+    function isOwner(userId) {
+      return isAuthenticated() && request.auth.uid == userId;
+    }
+    
+    // Helper function to get user role
+    function getUserRole() {
+      return get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role;
+    }
+    
+    // Helper function to check if user is staff (agent or admin)
+    function isStaff() {
+      return isAuthenticated() && getUserRole() in ['agent', 'admin'];
+    }
+    
+    // Users collection - users can read/write their own document
+    match /users/{userId} {
+      // Allow read if user is authenticated and owns the document, or is staff
+      allow read: if isAuthenticated() && (isOwner(userId) || isStaff());
+      
+      // Allow create if user is authenticated and creating their own document
+      allow create: if isAuthenticated() && request.auth.uid == userId;
+      
+      // Allow update if user owns the document or is admin
+      allow update: if isAuthenticated() && (isOwner(userId) || getUserRole() == 'admin');
+      
+      // Allow delete only for admins
+      allow delete: if isAuthenticated() && getUserRole() == 'admin';
+    }
+    
+    // Routes collection - readable by all authenticated users
+    match /routes/{routeId} {
+      allow read: if isAuthenticated();
+      allow write: if isStaff();
+    }
+    
+    // Trips collection - readable by all authenticated users
+    match /trips/{tripId} {
+      allow read: if isAuthenticated();
+      allow write: if isStaff();
+    }
+    
+    // Tickets collection
+    match /tickets/{ticketId} {
+      // Users can read their own tickets, staff can read all
+      allow read: if isAuthenticated() && 
+                     (resource == null || resource.data.userId == request.auth.uid || isStaff());
+      
+      // Only agents and admins can create tickets
+      allow create: if isStaff();
+      
+      // Only agents and admins can update tickets
+      allow update: if isStaff();
+      
+      // Only admins can delete tickets
+      allow delete: if isAuthenticated() && getUserRole() == 'admin';
+    }
+    
+    // Vehicle locations collection - readable by all authenticated users
+    match /vehicleLocations/{vehicleId} {
+      allow read: if isAuthenticated();
+      // Only agents and admins can update vehicle locations
+      allow write: if isStaff();
+    }
+    
+    // Vehicles collection - readable by all authenticated users
+    match /vehicles/{vehicleId} {
+      allow read: if isAuthenticated();
+      // Only agents and admins can write
+      allow write: if isStaff();
+    }
+    
+    // Transactions collection
+    match /transactions/{transactionId} {
+      // Users can read their own transactions, staff can read all
+      allow read: if isAuthenticated() && 
+                     (resource == null || resource.data.userId == request.auth.uid || isStaff());
+      
+      // Only agents and admins can create transactions
+      allow create: if isStaff();
+    }
+    
+    // Default deny all other collections
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}
