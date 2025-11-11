@@ -3,6 +3,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:qr_flutter/qr_flutter.dart';
+import 'package:flutter/services.dart';
 
 import '../providers/ticket_providers.dart';
 import '../widgets/ticket_view.dart';
@@ -60,18 +62,30 @@ class _TicketDetailPageState extends ConsumerState<TicketDetailPage> {
       // Load route and trip info
       final firestore = FirebaseFirestore.instance;
       
-      final routeDoc = await firestore.collection('routes').doc(ticket.routeId).get();
-      if (routeDoc.exists) {
-        setState(() {
-          _route = RouteModel.fromFirestore(routeDoc);
-        });
+      try {
+        final routeDoc = await firestore.collection('routes').doc(ticket.routeId).get();
+        if (routeDoc.exists) {
+          setState(() {
+            _route = RouteModel.fromFirestore(routeDoc);
+          });
+        } else {
+          print('Route not found: ${ticket.routeId}');
+        }
+      } catch (e) {
+        print('Error loading route: $e');
       }
 
-      final tripDoc = await firestore.collection('trips').doc(ticket.tripId).get();
-      if (tripDoc.exists) {
-        setState(() {
-          _trip = TripModel.fromFirestore(tripDoc);
-        });
+      try {
+        final tripDoc = await firestore.collection('trips').doc(ticket.tripId).get();
+        if (tripDoc.exists) {
+          setState(() {
+            _trip = TripModel.fromFirestore(tripDoc);
+          });
+        } else {
+          print('Trip not found: ${ticket.tripId}');
+        }
+      } catch (e) {
+        print('Error loading trip: $e');
       }
 
       setState(() {
@@ -210,16 +224,20 @@ class _TicketDetailPageState extends ConsumerState<TicketDetailPage> {
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16.0),
         child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
+          crossAxisAlignment: CrossAxisAlignment.center,
           children: [
             // Ticket View (Physical Ticket Design)
-            Center(
-              child: TicketView(
+            if (_route != null && _trip != null)
+              TicketView(
                 ticket: ticket,
-                route: _route,
-                trip: _trip,
+                route: _route!,
+                trip: _trip!,
+              )
+            else
+              const Padding(
+                padding: EdgeInsets.all(16.0),
+                child: Text('Loading route and trip information...'),
               ),
-            ),
             const SizedBox(height: 24),
             
             // Status Card
@@ -394,6 +412,42 @@ class _TicketDetailPageState extends ConsumerState<TicketDetailPage> {
                     const SizedBox(height: 12),
                     _buildInfoRow('Ticket ID', ticket.id, Icons.tag),
                     const SizedBox(height: 8),
+                    // QR Code
+                    if (ticket.qrPayload.isNotEmpty)
+                      Align(
+                        alignment: Alignment.center,
+                        child: Column(
+                          children: [
+                            QrImageView(
+                              data: ticket.qrPayload,
+                              version: QrVersions.auto,
+                              size: 160,
+                              backgroundColor: Colors.white,
+                              errorCorrectionLevel: QrErrorCorrectLevel.M,
+                            ),
+                            const SizedBox(height: 8),
+                            Text(
+                              'QR Payload: ${ticket.qrPayload}',
+                              textAlign: TextAlign.center,
+                              style: Theme.of(context).textTheme.bodySmall,
+                            ),
+                            const SizedBox(height: 8),
+                            OutlinedButton.icon(
+                              onPressed: () async {
+                                await Clipboard.setData(ClipboardData(text: ticket.qrPayload));
+                                if (mounted) {
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    const SnackBar(content: Text('QR payload copied')),
+                                  );
+                                }
+                              },
+                              icon: const Icon(Icons.copy, size: 16),
+                              label: const Text('Copy QR Payload'),
+                            ),
+                          ],
+                        ),
+                      ),
+                    const SizedBox(height: 8),
                     _buildInfoRow(
                       'Issued On',
                       DateFormat('MMM dd, yyyy • hh:mm a').format(ticket.issuedAt),
@@ -409,32 +463,38 @@ class _TicketDetailPageState extends ConsumerState<TicketDetailPage> {
 
             // Action Buttons
             if (canTrack) ...[
-              ElevatedButton.icon(
-                onPressed: _trackBus,
-                icon: const Icon(Icons.location_on),
-                label: const Text('Track Bus'),
-                style: ElevatedButton.styleFrom(
-                  padding: const EdgeInsets.symmetric(vertical: 16),
-                  backgroundColor: Theme.of(context).colorScheme.primary,
-                  foregroundColor: Colors.white,
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton.icon(
+                  onPressed: _trackBus,
+                  icon: const Icon(Icons.location_on),
+                  label: const Text('Track Bus'),
+                  style: ElevatedButton.styleFrom(
+                    padding: const EdgeInsets.symmetric(vertical: 16),
+                    backgroundColor: Theme.of(context).colorScheme.primary,
+                    foregroundColor: Colors.white,
+                  ),
                 ),
               ),
               const SizedBox(height: 12),
             ],
             if (canCancel) ...[
-              OutlinedButton.icon(
-                onPressed: _isCancelling ? null : _cancelTicket,
-                icon: _isCancelling
-                    ? const SizedBox(
-                        width: 16,
-                        height: 16,
-                        child: CircularProgressIndicator(strokeWidth: 2),
-                      )
-                    : const Icon(Icons.cancel),
-                label: Text(_isCancelling ? 'Cancelling...' : 'Cancel Ticket'),
-                style: OutlinedButton.styleFrom(
-                  padding: const EdgeInsets.symmetric(vertical: 16),
-                  foregroundColor: Colors.red,
+              SizedBox(
+                width: double.infinity,
+                child: OutlinedButton.icon(
+                  onPressed: _isCancelling ? null : _cancelTicket,
+                  icon: _isCancelling
+                      ? const SizedBox(
+                          width: 16,
+                          height: 16,
+                          child: CircularProgressIndicator(strokeWidth: 2),
+                        )
+                      : const Icon(Icons.cancel),
+                  label: Text(_isCancelling ? 'Cancelling...' : 'Cancel Ticket'),
+                  style: OutlinedButton.styleFrom(
+                    padding: const EdgeInsets.symmetric(vertical: 16),
+                    foregroundColor: Colors.red,
+                  ),
                 ),
               ),
             ],

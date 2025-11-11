@@ -9,6 +9,7 @@ import '../../features/auth/presentation/providers/auth_providers.dart';
 import '../../features/tickets/presentation/pages/tickets_list_page.dart';
 import '../../features/tickets/presentation/pages/ticket_detail_page.dart';
 import '../../features/tickets/presentation/pages/issue_ticket_page.dart';
+import '../../features/tickets/presentation/pages/payment_page.dart';
 import '../../features/tickets/presentation/pages/book_ticket_page.dart';
 import '../../features/tracking/presentation/pages/driver_tracking_page.dart';
 import '../../features/tracking/presentation/pages/passenger_tracking_page.dart';
@@ -102,6 +103,21 @@ final routerProvider = Provider<GoRouter>((ref) {
         builder: (context, state) {
           final ticketId = state.pathParameters['id']!;
           return TicketDetailPage(ticketId: ticketId);
+        },
+      ),
+      // Payment route
+      GoRoute(
+        path: '/pay',
+        name: 'payment',
+        builder: (context, state) {
+          final routeId = state.uri.queryParameters['routeId']!;
+          final tripId = state.uri.queryParameters['tripId']!;
+          final seat = int.parse(state.uri.queryParameters['seat']!);
+          return PaymentPage(
+            routeId: routeId,
+            tripId: tripId,
+            seatNumber: seat,
+          );
         },
       ),
       // Customer booking route

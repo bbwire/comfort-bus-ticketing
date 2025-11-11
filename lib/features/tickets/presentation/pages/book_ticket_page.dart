@@ -5,7 +5,6 @@ import 'package:intl/intl.dart';
 
 import '../../../../core/models/route_model.dart';
 import '../../../../core/models/trip_model.dart';
-import '../../../auth/presentation/providers/auth_providers.dart';
 import '../providers/ticket_providers.dart';
 import '../../../auth/presentation/widgets/auth_button.dart';
 
@@ -84,66 +83,7 @@ class _BookTicketPageState extends ConsumerState<BookTicketPage> {
     }
   }
 
-  Future<void> _handleBookTicket() async {
-    if (_selectedRoute == null || _selectedTrip == null || _selectedSeat == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Please select route, trip, and seat'),
-          backgroundColor: Colors.red,
-        ),
-      );
-      return;
-    }
-
-    setState(() => _isLoading = true);
-
-    try {
-      final repository = ref.read(ticketRepositoryProvider);
-      final currentUser = ref.read(authStateProvider).valueOrNull;
-      if (currentUser == null) {
-        throw Exception('User not authenticated');
-      }
-
-      // Get user model to get user info
-      final authRepository = ref.read(authRepositoryProvider);
-      final userModel = await authRepository.getCurrentUserModel();
-      if (userModel == null) {
-        throw Exception('User model not found');
-      }
-
-      final ticket = await repository.createTicket(
-        userId: userModel.uid,
-        tripId: _selectedTrip!.id,
-        routeId: _selectedRoute!.id,
-        passengerName: userModel.displayName ?? userModel.email.split('@')[0],
-        passengerPhone: null, // Phone number not stored in user model
-        passengerEmail: userModel.email,
-        seatNumber: _selectedSeat!,
-        amount: _selectedRoute!.basePrice,
-        issuedBy: currentUser.uid, // Customer books for themselves
-      );
-
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Ticket booked successfully!'),
-            backgroundColor: Colors.green,
-          ),
-        );
-        context.go('/tickets/${ticket.id}');
-      }
-    } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(e.toString().replaceAll('Exception: ', '')),
-            backgroundColor: Colors.red,
-          ),
-        );
-        setState(() => _isLoading = false);
-      }
-    }
-  }
+  // Ticket creation now happens after payment. This method is no longer used.
 
   Future<void> _selectDate() async {
     final picked = await showDatePicker(
@@ -301,10 +241,27 @@ class _BookTicketPageState extends ConsumerState<BookTicketPage> {
                 const SizedBox(height: 24),
               ],
 
-              // Book Button
+              // Continue to Payment
               AuthButton(
-                text: 'Book Ticket',
-                onPressed: _isLoading ? null : _handleBookTicket,
+                text: 'Continue to Payment',
+                onPressed: _isLoading
+                    ? null
+                    : () {
+                        if (_selectedRoute == null ||
+                            _selectedTrip == null ||
+                            _selectedSeat == null) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(
+                              content: Text('Please select route, trip, and seat'),
+                              backgroundColor: Colors.red,
+                            ),
+                          );
+                          return;
+                        }
+                        context.push(
+                          '/pay?routeId=${_selectedRoute!.id}&tripId=${_selectedTrip!.id}&seat=${_selectedSeat!}',
+                        );
+                      },
                 isLoading: _isLoading,
               ),
             ],

@@ -19,21 +19,22 @@ class TicketView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      width: double.infinity,
+    return ConstrainedBox(
       constraints: const BoxConstraints(maxWidth: 400),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(8),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.1),
-            blurRadius: 10,
-            offset: const Offset(0, 4),
-          ),
-        ],
-      ),
-      child: Column(
+      child: Container(
+        width: double.infinity,
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(8),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.1),
+              blurRadius: 10,
+              offset: const Offset(0, 4),
+            ),
+          ],
+        ),
+        child: Column(
         children: [
           // Main ticket body
           Row(
@@ -50,9 +51,10 @@ class TicketView extends StatelessWidget {
                   ),
                 ),
                 padding: const EdgeInsets.all(12),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
+                child: IntrinsicHeight(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
                     // Company logo/name
                     Container(
                       padding: const EdgeInsets.symmetric(vertical: 8),
@@ -121,7 +123,7 @@ class TicketView extends StatelessWidget {
                         ),
                       ),
                     ),
-                    const Spacer(),
+                    const SizedBox(height: 16),
                     // Serial number
                     Text(
                       'S/No. ${ticket.id.substring(0, 4)}',
@@ -140,7 +142,8 @@ class TicketView extends StatelessWidget {
                           fontSize: 9,
                         ),
                       ),
-                  ],
+                    ],
+                  ),
                 ),
               ),
               // Right side - Ticket details (Light Pink/White)
@@ -219,6 +222,7 @@ class TicketView extends StatelessWidget {
             ),
           ),
         ],
+        ),
       ),
     );
   }
