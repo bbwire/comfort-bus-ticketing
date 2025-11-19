@@ -113,7 +113,7 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                 const SizedBox(height: 40),
                 // Logo/Title
                 Text(
-                  'Comfort Busses',
+                  'Comfort Travellers',
                   style: Theme.of(context).textTheme.displayMedium,
                   textAlign: TextAlign.center,
                 ),

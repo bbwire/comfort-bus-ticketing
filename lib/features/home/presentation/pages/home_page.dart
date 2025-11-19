@@ -33,7 +33,7 @@ class HomePage extends ConsumerWidget {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Comfort Busses'),
+        title: const Text('Comfort Travellers'),
         actions: [
           IconButton(
             icon: const Icon(Icons.logout),

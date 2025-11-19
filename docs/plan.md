@@ -1,8 +1,8 @@
-﻿# Comfort Busses Ticketing Plan
+﻿# Comfort Travellers Ticketing Plan
 
 ## Goal
 
-Deliver a Flutter smart-ticketing app backed by Firebase that modernizes Comfort Busses' sales and validation workflow, featuring multi-provider auth, ticket lifecycle management, revenue analytics, QR support, and email delivery within a polished #d51f19-themed UI.
+Deliver a Flutter smart-ticketing app backed by Firebase that modernizes Comfort Travellers' sales and validation workflow, featuring multi-provider auth, ticket lifecycle management, revenue analytics, QR support, and email delivery within a polished #d51f19-themed UI.
 
 ## Research Insights
 

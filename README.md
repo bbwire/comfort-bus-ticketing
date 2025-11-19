@@ -1,6 +1,6 @@
-# Comfort Busses Ticketing App
+# Comfort Travellers Ticketing App
 
-A smart ticketing application for Comfort Busses, transitioning from paper-based to digital ticketing.
+A smart ticketing application for Comfort Travellers, transitioning from paper-based to digital ticketing.
 
 ## Features
 
@@ -103,5 +103,5 @@ flutter build ios --release
 
 ## License
 
-Proprietary - Comfort Busses
+Proprietary - Comfort Travellers
 

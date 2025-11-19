@@ -34,24 +34,32 @@ class _TicketDetailPageState extends ConsumerState<TicketDetailPage> {
   @override
   void initState() {
     super.initState();
-    _loadTicket();
+    // Use addPostFrameCallback to ensure ref is available
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _loadTicket();
+    });
   }
 
   Future<void> _loadTicket() async {
+    if (!mounted) return;
+    
     try {
       final repository = ref.read(ticketRepositoryProvider);
       final ticket = await repository.getTicketById(widget.ticketId);
       
+      if (!mounted) return;
+      
       if (ticket == null) {
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('Ticket not found'),
-              backgroundColor: Colors.red,
-            ),
-          );
-          context.pop();
-        }
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Ticket not found'),
+            backgroundColor: Colors.red,
+          ),
+        );
+        context.pop();
+        setState(() {
+          _isLoading = false;
+        });
         return;
       }
 
@@ -62,35 +70,105 @@ class _TicketDetailPageState extends ConsumerState<TicketDetailPage> {
       // Load route and trip info
       final firestore = FirebaseFirestore.instance;
       
-      try {
-        final routeDoc = await firestore.collection('routes').doc(ticket.routeId).get();
-        if (routeDoc.exists) {
-          setState(() {
-            _route = RouteModel.fromFirestore(routeDoc);
-          });
-        } else {
-          print('Route not found: ${ticket.routeId}');
+      // Load route info
+      if (ticket.routeId.isNotEmpty) {
+        try {
+          final routeDoc = await firestore.collection('routes').doc(ticket.routeId).get();
+          if (routeDoc.exists && routeDoc.data() != null) {
+            try {
+              final route = RouteModel.fromFirestore(routeDoc);
+              if (mounted) {
+                setState(() {
+                  _route = route;
+                });
+              }
+            } catch (e) {
+              if (mounted) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text('Error parsing route data: ${e.toString()}'),
+                    backgroundColor: Colors.orange,
+                    duration: const Duration(seconds: 3),
+                  ),
+                );
+              }
+            }
+          } else {
+            if (mounted) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content: Text('Route not found: ${ticket.routeId}'),
+                  backgroundColor: Colors.orange,
+                  duration: const Duration(seconds: 3),
+                ),
+              );
+            }
+          }
+        } catch (e) {
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text('Error loading route: ${e.toString()}'),
+                backgroundColor: Colors.orange,
+                duration: const Duration(seconds: 3),
+              ),
+            );
+          }
         }
-      } catch (e) {
-        print('Error loading route: $e');
       }
 
-      try {
-        final tripDoc = await firestore.collection('trips').doc(ticket.tripId).get();
-        if (tripDoc.exists) {
-          setState(() {
-            _trip = TripModel.fromFirestore(tripDoc);
-          });
-        } else {
-          print('Trip not found: ${ticket.tripId}');
+      // Load trip info
+      if (ticket.tripId.isNotEmpty) {
+        try {
+          final tripDoc = await firestore.collection('trips').doc(ticket.tripId).get();
+          if (tripDoc.exists && tripDoc.data() != null) {
+            try {
+              final trip = TripModel.fromFirestore(tripDoc);
+              if (mounted) {
+                setState(() {
+                  _trip = trip;
+                });
+              }
+            } catch (e) {
+              if (mounted) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text('Error parsing trip data: ${e.toString()}'),
+                    backgroundColor: Colors.orange,
+                    duration: const Duration(seconds: 3),
+                  ),
+                );
+              }
+            }
+          } else {
+            if (mounted) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content: Text('Trip not found: ${ticket.tripId}'),
+                  backgroundColor: Colors.orange,
+                  duration: const Duration(seconds: 3),
+                ),
+              );
+            }
+          }
+        } catch (e) {
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text('Error loading trip: ${e.toString()}'),
+                backgroundColor: Colors.orange,
+                duration: const Duration(seconds: 3),
+              ),
+            );
+          }
         }
-      } catch (e) {
-        print('Error loading trip: $e');
       }
 
-      setState(() {
-        _isLoading = false;
-      });
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+        });
+      }
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(

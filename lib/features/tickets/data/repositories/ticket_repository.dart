@@ -22,7 +22,7 @@ class TicketRepository {
     // Create a simple signature (in production, use proper encryption)
     final timestamp = DateTime.now().millisecondsSinceEpoch;
     final signature = sha256
-        .convert(utf8.encode('$ticketId:$timestamp:comfort_busses'))
+        .convert(utf8.encode('$ticketId:$timestamp:comfort_travellers'))
         .toString()
         .substring(0, 16);
     return '$ticketId:$signature';

@@ -25,7 +25,7 @@ flutter pub get
 
 1. Go to [Firebase Console](https://console.firebase.google.com/)
 2. Click "Add project"
-3. Name it "Comfort Busses Ticketing" (or your preferred name)
+3. Name it "Comfort Travellers Ticketing" (or your preferred name)
 4. Follow the setup wizard
 
 #### Configure FlutterFire

@@ -2,7 +2,7 @@
 
 ## Overview
 
-This guide outlines what's needed to implement a GPS-based bus tracking module for the Comfort Busses ticketing app. The module will allow real-time tracking of buses on their routes.
+This guide outlines what's needed to implement a GPS-based bus tracking module for the Comfort Travellers ticketing app. The module will allow real-time tracking of buses on their routes.
 
 ## Required Packages
 

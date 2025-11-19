@@ -29,7 +29,7 @@ class ComfortBussesApp extends ConsumerWidget {
     final router = ref.watch(routerProvider);
 
     return MaterialApp.router(
-      title: 'Comfort Busses',
+      title: 'Comfort Travellers',
       debugShowCheckedModeBanner: false,
       theme: AppTheme.lightTheme,
       darkTheme: AppTheme.darkTheme,
